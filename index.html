@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Crowd Panic Detection - SOC</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Top Nav -->
+        <header class="top-nav">
+            <div class="logo">
+                <div class="logo-icon"><i class="fa-solid fa-shield"></i></div>
+                <div class="logo-text">
+                    <h1>Smart Crowd</h1>
+                    <h1>Panic Detection</h1>
+                    <span>SECURITY OPERATIONS CENTER</span>
+                </div>
+            </div>
+            
+            <div class="nav-right">
+                <div class="nav-stats">
+                    <div class="nav-stat border-right">
+                        <span class="label">SYSTEM STATUS</span>
+                        <span class="value text-warning" id="global-system-status"><i class="fa-solid fa-triangle-exclamation"></i> WARNING DETECTED</span>
+                    </div>
+                    <div class="nav-stat">
+                        <span class="label">CAMERAS</span>
+                        <span class="value"><i class="fa-solid fa-video"></i> <span id="val-cameras">6</span> Active</span>
+                    </div>
+                    <div class="nav-stat">
+                        <span class="label">ZONES</span>
+                        <span class="value"><i class="fa-solid fa-location-crosshairs"></i> <span id="val-zones">6</span> Monitored</span>
+                    </div>
+                    <div class="nav-stat">
+                        <span class="label">ALERTS</span>
+                        <span class="value"><i class="fa-solid fa-bell"></i> <span id="val-alerts">0</span> Active</span>
+                    </div>
+                </div>
+                
+                <div class="nav-time" id="clock">
+                    --:--:--
+                    <span>---, --- --</span>
+                </div>
+                
+                <div class="nav-actions">
+                    <button class="btn btn-outline" onclick="exportData()"><i class="fa-solid fa-download"></i> Export</button>
+                    <button class="btn btn-danger" onclick="triggerPanic()"><i class="fa-solid fa-triangle-exclamation"></i> Simulate Panic</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Top Stats Row -->
+        <div class="top-stats-row">
+            <div class="stat-card">
+                <div class="stat-header" style="justify-content: space-between;">
+                    <span><i class="fa-solid fa-users"></i> TOTAL PEOPLE</span>
+                    <i class="fa-solid fa-arrow-trend-up text-success" style="font-size: 10px;"></i>
+                </div>
+                <div class="stat-value" id="stat-total-people">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span><i class="fa-solid fa-chart-line"></i> AVG DENSITY</span>
+                </div>
+                <div class="stat-value text-warning" style="display:flex; align-items:center; gap:10px;">
+                    <svg viewBox="0 0 36 36" style="width:24px; height:24px; transform: rotate(-90deg);">
+                        <path stroke="rgba(245, 158, 11, 0.2)" stroke-width="4" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                        <path stroke="#f59e0b" stroke-width="4" stroke-dasharray="51.7, 100" fill="none" id="avg-density-ring" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                    </svg>
+                    <span id="stat-avg-density">0.0%</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-header" style="justify-content: space-between;">
+                    <span><i class="fa-solid fa-video"></i> ACTIVE CAMERAS</span>
+                    <span class="dot normal"></span>
+                </div>
+                <div class="stat-value">6</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-header" style="justify-content: space-between;">
+                    <span><i class="fa-solid fa-clock-rotate-left"></i> INCIDENTS TODAY</span>
+                    <i class="fa-solid fa-arrow-trend-up text-danger" style="font-size: 10px;"></i>
+                </div>
+                <div class="stat-value text-danger" id="stat-incidents">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span><i class="fa-solid fa-stopwatch"></i> RESPONSE TIME</span>
+                </div>
+                <div class="stat-value">2.3 <span class="unit">min</span></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span><i class="fa-solid fa-brain"></i> AI ACCURACY</span>
+                </div>
+                <div class="stat-value text-success">97.8%</div>
+            </div>
+        </div>
+
+        <div class="main-content-grid">
+            <!-- Left Column -->
+            <div class="left-col">
+                <section class="live-feeds">
+                    <div class="section-header">
+                        <h2>Live Monitoring Feeds</h2>
+                        <div class="legend">
+                            <span class="legend-item"><span class="dot normal"></span> Normal</span>
+                            <span class="legend-item"><span class="dot warning"></span> Warning</span>
+                            <span class="legend-item"><span class="dot panic"></span> Panic</span>
+                        </div>
+                    </div>
+                    
+                    <div class="feeds-grid">
+                        <!-- Camera 1 -->
+                        <div class="feed-card" id="cam-NorthEntrance">
+                            <div class="feed-header">
+                                <span class="feed-title"><span class="dot normal" id="dot-NorthEntrance"></span> CAM-01: North Entrance</span>
+                                <span class="feed-status badge-normal">AI ACTIVE</span>
+                            </div>
+                            <div class="feed-video">
+                                <img src="/api/video_feed/NorthEntrance">
+                            </div>
+                            <div class="feed-footer">
+                                <div class="feed-metrics">
+                                    <span><i class="fa-solid fa-users"></i> <span id="dens-NorthEntrance">0</span></span>
+                                    <span><i class="fa-solid fa-bolt" style="font-size: 8px;"></i> <span id="score-NorthEntrance">0%</span></span>
+                                </div>
+                                <div class="feed-bar-container">
+                                    <div class="feed-bar-fill normal-bg" id="bar-NorthEntrance"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Camera 2 -->
+                        <div class="feed-card" id="cam-MainLobby">
+                            <div class="feed-header">
+                                <span class="feed-title"><span class="dot normal" id="dot-MainLobby"></span> CAM-02: Main Lobby</span>
+                                <span class="feed-status badge-normal">AI ACTIVE</span>
+                            </div>
+                            <div class="feed-video">
+                                <img src="/api/video_feed/MainLobby">
+                            </div>
+                            <div class="feed-footer">
+                                <div class="feed-metrics">
+                                    <span><i class="fa-solid fa-users"></i> <span id="dens-MainLobby">0</span></span>
+                                    <span><i class="fa-solid fa-bolt" style="font-size: 8px;"></i> <span id="score-MainLobby">0%</span></span>
+                                </div>
+                                <div class="feed-bar-container">
+                                    <div class="feed-bar-fill normal-bg" id="bar-MainLobby"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Camera 3 -->
+                        <div class="feed-card" id="cam-CentralPlaza">
+                            <div class="feed-header">
+                                <span class="feed-title"><span class="dot normal" id="dot-CentralPlaza"></span> CAM-03: Central Plaza</span>
+                                <span class="feed-status badge-normal">AI ACTIVE</span>
+                            </div>
+                            <div class="feed-video">
+                                <img src="/api/video_feed/CentralPlaza">
+                            </div>
+                            <div class="feed-footer">
+                                <div class="feed-metrics">
+                                    <span><i class="fa-solid fa-users"></i> <span id="dens-CentralPlaza">0</span></span>
+                                    <span><i class="fa-solid fa-bolt" style="font-size: 8px;"></i> <span id="score-CentralPlaza">0%</span></span>
+                                </div>
+                                <div class="feed-bar-container">
+                                    <div class="feed-bar-fill normal-bg" id="bar-CentralPlaza"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Camera 4 -->
+                        <div class="feed-card" id="cam-FoodCourt">
+                            <div class="feed-header">
+                                <span class="feed-title"><span class="dot normal" id="dot-FoodCourt"></span> CAM-04: Food Court</span>
+                                <span class="feed-status badge-normal">AI ACTIVE</span>
+                            </div>
+                            <div class="feed-video">
+                                <img src="/api/video_feed/FoodCourt">
+                            </div>
+                            <div class="feed-footer">
+                                <div class="feed-metrics">
+                                    <span><i class="fa-solid fa-users"></i> <span id="dens-FoodCourt">0</span></span>
+                                    <span><i class="fa-solid fa-bolt" style="font-size: 8px;"></i> <span id="score-FoodCourt">0%</span></span>
+                                </div>
+                                <div class="feed-bar-container">
+                                    <div class="feed-bar-fill normal-bg" id="bar-FoodCourt"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Camera 5 -->
+                        <div class="feed-card" id="cam-SouthExit">
+                            <div class="feed-header">
+                                <span class="feed-title"><span class="dot normal" id="dot-SouthExit"></span> CAM-05: South Exit Gate</span>
+                                <span class="feed-status badge-normal">AI ACTIVE</span>
+                            </div>
+                            <div class="feed-video">
+                                <img src="/api/video_feed/SouthExit">
+                            </div>
+                            <div class="feed-footer">
+                                <div class="feed-metrics">
+                                    <span><i class="fa-solid fa-users"></i> <span id="dens-SouthExit">0</span></span>
+                                    <span><i class="fa-solid fa-bolt" style="font-size: 8px;"></i> <span id="score-SouthExit">0%</span></span>
+                                </div>
+                                <div class="feed-bar-container">
+                                    <div class="feed-bar-fill normal-bg" id="bar-SouthExit"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Camera 6 -->
+                        <div class="feed-card" id="cam-EastCorridor">
+                            <div class="feed-header">
+                                <span class="feed-title"><span class="dot normal" id="dot-EastCorridor"></span> CAM-06: East Corridor</span>
+                                <span class="feed-status badge-normal">AI ACTIVE</span>
+                            </div>
+                            <div class="feed-video">
+                                <img src="/api/video_feed/EastCorridor">
+                            </div>
+                            <div class="feed-footer">
+                                <div class="feed-metrics">
+                                    <span><i class="fa-solid fa-users"></i> <span id="dens-EastCorridor">0</span></span>
+                                    <span><i class="fa-solid fa-bolt" style="font-size: 8px;"></i> <span id="score-EastCorridor">0%</span></span>
+                                </div>
+                                <div class="feed-bar-container">
+                                    <div class="feed-bar-fill normal-bg" id="bar-EastCorridor"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="activity-log panel">
+                    <div class="panel-header">SYSTEM ACTIVITY LOG</div>
+                    <div class="log-container" id="log-list">
+                        <!-- Logs injected by JS -->
+                    </div>
+                </section>
+            </div>
+
+            <!-- Right Column -->
+            <div class="right-col">
+                <section class="analytics panel">
+                    <div class="panel-header"><i class="fa-solid fa-chart-area"></i> CROWD ANALYTICS</div>
+                    <div class="analytics-grid">
+                        <div class="analytics-card">
+                            <div class="label">AVG DENSITY</div>
+                            <div class="value" id="analytics-avg-density">0.0% <i class="fa-solid fa-arrow-trend-up"></i></div>
+                        </div>
+                        <div class="analytics-card">
+                            <div class="label">MOVEMENT SPEED</div>
+                            <div class="value" id="analytics-speed">Normal</div>
+                        </div>
+                        <div class="analytics-card">
+                            <div class="label">AIR FLOW / WIND</div>
+                            <div class="value" id="analytics-wind">4.2 <span class="unit" style="font-size: 10px; color: var(--text-muted);">km/h</span></div>
+                        </div>
+                        <div class="analytics-card full-width">
+                            <div class="label" style="display:flex; justify-content:space-between;">
+                                <span>FLOW DIRECTION</span>
+                                <span id="flow-arrows" style="color:var(--color-danger); display:none;"><i class="fa-solid fa-arrow-up-right"></i> <i class="fa-solid fa-arrow-down-right"></i> <i class="fa-solid fa-arrow-left"></i></span>
+                            </div>
+                            <div class="value" id="analytics-flow">Directional <i class="fa-solid fa-arrow-right"></i><i class="fa-solid fa-arrow-right"></i></div>
+                        </div>
+                    </div>
+                    <div class="chart-area">
+                        <div class="label">DENSITY TREND (LAST 30M)</div>
+                        <!-- Simulated chart graphic -->
+                        <svg viewBox="0 0 100 30" class="sparkline" id="trend-line">
+                            <path d="M0,25 Q10,20 20,22 T40,15 T60,20 T80,10 T100,12" fill="none" stroke="var(--color-success)" stroke-width="2"/>
+                            <path d="M0,25 Q10,20 20,22 T40,15 T60,20 T80,10 T100,12 L100,30 L0,30 Z" fill="rgba(16, 185, 129, 0.1)" stroke="none"/>
+                        </svg>
+                    </div>
+                </section>
+
+                <section class="active-alerts panel">
+                    <div class="panel-header"><i class="fa-solid fa-triangle-exclamation"></i> ACTIVE ALERTS</div>
+                    <div class="alerts-content" id="alerts-widget">
+                        <div class="no-alerts">
+                            <i class="fa-regular fa-circle-check"></i>
+                            <p>No active alerts</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="zone-status panel">
+                    <div class="panel-header">ZONE STATUS OVERVIEW</div>
+                    <div class="zone-grid" id="zone-grid">
+                        <!-- Populated by JS -->
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
